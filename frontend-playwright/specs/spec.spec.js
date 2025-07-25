@@ -52,7 +52,7 @@ test.describe('QA Technical Assignment', () => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Would need to find the ID of the item in order to check this URL
-    //await expect(page).toHaveURL('https://www.saucedemo.com/inventory-item.html?id=0');
+    //await expect(page).toHaveURL(link+inventoryItemPath+inventoryItemQuery+);
 
     //Check that the item has a name title, description and price and that they are visible and have text in them
     const titleLocator = page.locator('data-test=inventory-item-name');
@@ -79,8 +79,15 @@ test.describe('QA Technical Assignment', () => {
     await expect(page.getByRole('button', {name: 'add to cart'})).toBeHidden();
     await expect(page.getByRole('button', {name: 'remove'})).toBeVisible();
 
-    await expect(page.locator('data-test=shopping-cart-badge')).toBeVisible();
-    await expect(page.locator('data-test=shopping-cart-badge')).toHaveText('1');
+    //Function that checks that the cart badge (the red circle with the number of items) updates accordingly.
+    //Since the cart icon appears in most pages of the website I made it a function to not repeat the same 2 lines in all pages.
+    async function checkCartBadge(){
+      await expect(page.locator('data-test=shopping-cart-badge')).toBeVisible();
+      await expect(page.locator('data-test=shopping-cart-badge')).toHaveText('1');
+      return;
+    }
+
+    await checkCartBadge();
 
     await page.locator('data-test=shopping-cart-link').click();
 
@@ -89,8 +96,7 @@ test.describe('QA Technical Assignment', () => {
     await expect(page).toHaveURL(link+cartPath);
 
     //Check that the item is listed and that the cart still displays it, then go to checkout
-    await expect(page.locator('data-test=shopping-cart-badge')).toBeVisible();
-    await expect(page.locator('data-test=shopping-cart-badge')).toHaveText('1');
+    await checkCartBadge();
 
     await expect(page.getByText(itemName)).toBeVisible();
 
@@ -103,6 +109,8 @@ test.describe('QA Technical Assignment', () => {
     
     await expect(page).toHaveURL(link+checkoutPath_1);
 
+    await checkCartBadge();
+
     await page.getByPlaceholder('first name').fill(firstName);
     await page.getByPlaceholder('last name').fill(lastName);
     await page.getByPlaceholder('zip/postal code').fill(zipCode);
@@ -113,13 +121,15 @@ test.describe('QA Technical Assignment', () => {
 
     await expect(page).toHaveURL(link+checkoutPath_2);
 
+    await checkCartBadge();
+
     await page.getByRole('button', {name: 'finish'}).click();
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     await expect(page).toHaveURL(link+checkoutPath_complete);
 
-    //PURCHASE COMPLETED!
+    //CHECKOUT COMPLETED!
 
   });
 
