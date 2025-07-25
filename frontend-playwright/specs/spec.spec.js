@@ -12,21 +12,36 @@ test.describe('QA Technical Assignment', () => {
 
   test('FRONTEND', async ({page}) => {
 
-    // Navigate to the page
-    await page.goto('https://www.saucedemo.com/');
-    //Fill in the username field (need to make variable for the fill data)
-    await page.locator('#user-name').fill('standard_user');
-    //Fill in the password field (need to make variable for the fill data)
-    await page.locator('#password').fill('secret_sauce');
-    //Click the log in button (could be filtered better)
-    await page.getByRole('button').click();
-    //Waits for the inventory page to load
-    await expect(page).toHaveURL('https://www.saucedemo.com/inventory.html');
-    //Items are NOT in ID order, since they get sorted alphabetically within the page. Second item (Bike Light) is ID 0
-    await page.locator('#item_0_title_link').click();
-    await expect(page).toHaveURL('https://www.saucedemo.com/inventory-item.html?id=0');
-    //await page.getByRole();
+    //Links and paths
+    const link = 'https://www.saucedemo.com/';
+    const inventoryPath = 'inventory.html';
+    const inventoryItemPath = 'inventory-item.html';
+    const inventoryItemQuery = '?id=';
+    
+    //Login credentials
+    const username = 'standard_user';
+    const password = 'secret_sauce';
 
+    //Navigate to the page
+    await page.goto(link);
+    //Fill in the login credentials and press the button
+    await page.getByPlaceholder('username').fill(username);
+    await page.getByPlaceholder('password').fill(password);
+    await page.getByRole('button', {name: 'login'}).click();
+    //Waits for the inventory page to load
+    await expect(page).toHaveURL(link+inventoryPath);
+    //Items are NOT in ID order, since they get sorted alphabetically within the page. Second item (Bike Light) is ID 0
+    await page.locator('data-test=inventory-item-name').nth(1).click();
+    //await expect(page).toHaveURL('https://www.saucedemo.com/inventory-item.html?id=0');
+    //Check that the item has a name title, description and price and that they are visible
+    const titleLocator = page.locator('data-test=inventory-item-name');
+    const descLocator = page.locator('data-test=inventory-item-desc');
+    const priceLocator = page.locator('data-test=inventory-item-price');
+
+    await expect(titleLocator).toBeVisible();
+    await expect(descLocator).toBeVisible();
+    await expect(priceLocator).toBeVisible();
+    await expect(page.getByRole('button', {name: 'add to cart'})).toBeVisible();
 
   });
 
