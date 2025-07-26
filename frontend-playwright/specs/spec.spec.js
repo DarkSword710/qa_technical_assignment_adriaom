@@ -3,15 +3,7 @@ import specPage from '../page_objects/specPage';
 
 test.describe('QA Technical Assignment', () => {
 
-  //Need to find out how to ensure that I am logged out every iteration
-  test.beforeAll(async () => {});
-
-  test.beforeEach(async ({page}) => {
-
-  });
-
-  test('FRONTEND', async ({page}) => {
-
+    //VARIABLES
     //Links and paths
     const link = 'https://www.saucedemo.com/';
     const inventoryPath = 'inventory.html';
@@ -31,111 +23,150 @@ test.describe('QA Technical Assignment', () => {
     const lastName = 'Ortiz';
     const zipCode = '00000';
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Item to buy in the inventory screen (starts at 0)
+    const itemToBuy = 1;
 
-    //Navigate to the page
-    await page.goto(link);
+    test.beforeAll(async () => {});
 
-    //Fill in the login credentials and press the button
-    await page.getByPlaceholder('username').fill(username);
-    await page.getByPlaceholder('password').fill(password);
-    await page.getByRole('button', {name: 'login'}).click();
+    //Checking that we are not logged in already before the test case
+    test.beforeEach(async ({page}) => {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //Go to the page
+        await page.goto(link);
 
-    //Waits for the inventory page to load
-    await expect(page).toHaveURL(link+inventoryPath);
+        //Fill in the login credentials and press the button (uncomment to test that the logout works)
+        /*await page.getByPlaceholder('username').fill(username);
+        await page.getByPlaceholder('password').fill(password);
+        await page.getByRole('button', {name: 'login'}).click();*/
 
-    //Items are NOT in ID order, since they get sorted alphabetically within the page. Second item (Bike Light) is ID 0
-    await page.locator('data-test=inventory-item-name').nth(1).click();
+        //If for some reason you are redirected out of the login page, logout
+        if(page.url() != link){
+            await page.locator('id=react-burger-menu-btn').click();
+            console.log(page.url());
+            await page.getByText('logout').click();
+        }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    });
 
-    //Would need to find the ID of the item in order to check this URL
-    //await expect(page).toHaveURL(link+inventoryItemPath+inventoryItemQuery+);
+    //I assumed this to be one big test case rather than several small ones because each test reloads the page,
+    //which would make no sense since the buying process would be interrupted between each case
+    test('FRONTEND', async ({page}) => {
 
-    //Check that the item has a name title, description and price and that they are visible and have text in them
-    const titleLocator = page.locator('data-test=inventory-item-name');
-    const descLocator = page.locator('data-test=inventory-item-desc');
-    const priceLocator = page.locator('data-test=inventory-item-price');
+        //LOGIN PAGE////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    await expect(titleLocator).toBeVisible();
-    await expect(titleLocator).not.toBeEmpty();
+        //Navigate to the page
+        await page.goto(link);
 
-    await expect(descLocator).toBeVisible();
-    await expect(descLocator).not.toBeEmpty();
+        //Check that we did not get redirected because we were already logged in
+        await expect(page).toHaveURL(link);
 
-    await expect(priceLocator).toBeVisible();
-    await expect(priceLocator).not.toBeEmpty();
+        //Fill in the login credentials and press the button
+        await page.getByPlaceholder('username').fill(username);
+        await page.getByPlaceholder('password').fill(password);
+        await page.getByRole('button', {name: 'login'}).click();
 
-    //Store the product name to use for checking later
+        //INVENTORY PAGE////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    const itemName = await titleLocator.textContent();
-    //console.log(itemName);
+        //Waits for the inventory page to load and have the expected link
+        await expect(page).toHaveURL(link+inventoryPath);
 
-    //Add the item to cart, check that both the button and the cart change accordingly, then go to the cart
-    await page.getByRole('button', {name: 'add to cart'}).click();
+        //Items are NOT in ID order, since they get sorted alphabetically within the page by default. Second item alphabetically (Bike Light) is ID 0
+        //Checking all the items with the inventory-item-name as their data-test gives us a list of all products. Click on the desired one
+        await page.locator('data-test=inventory-item-name').nth(itemToBuy).click();
 
-    await expect(page.getByRole('button', {name: 'add to cart'})).toBeHidden();
-    await expect(page.getByRole('button', {name: 'remove'})).toBeVisible();
+        //PDP (PRODUCT DETAILS PAGE)////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //Function that checks that the cart badge (the red circle with the number of items) updates accordingly.
-    //Since the cart icon appears in most pages of the website I made it a function to not repeat the same 2 lines in all pages.
-    async function checkCartBadge(){
-      await expect(page.locator('data-test=shopping-cart-badge')).toBeVisible();
-      await expect(page.locator('data-test=shopping-cart-badge')).toHaveText('1');
-      return;
-    }
+        //Would need to find the ID of the item in order to check this URL
+        //await expect(page).toHaveURL(link+inventoryItemPath+inventoryItemQuery+);
 
-    await checkCartBadge();
+        //Check that the item has a name title, description and price and that they are visible and have text in them
+        const titleLocator = page.locator('data-test=inventory-item-name');
+        const descLocator = page.locator('data-test=inventory-item-desc');
+        const priceLocator = page.locator('data-test=inventory-item-price');
 
-    await page.locator('data-test=shopping-cart-link').click();
+        await expect(titleLocator).toBeVisible();
+        await expect(titleLocator).not.toBeEmpty();
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        await expect(descLocator).toBeVisible();
+        await expect(descLocator).not.toBeEmpty();
 
-    await expect(page).toHaveURL(link+cartPath);
+        await expect(priceLocator).toBeVisible();
+        await expect(priceLocator).not.toBeEmpty();
 
-    //Check that the item is listed and that the cart still displays it, then go to checkout
-    await checkCartBadge();
+        //Store the product name to use for checking later
+        const itemName = await titleLocator.textContent();
+        //console.log(itemName);
 
-    await expect(page.getByText(itemName)).toBeVisible();
+        //Add the item to cart, check that both the button and the cart change accordingly, then go to the cart
+        await page.getByRole('button', {name: 'add to cart'}).click();
 
-    await expect(page.locator('data-test=item-quantity')).toBeVisible();
-    await expect(page.locator('data-test=item-quantity')).toHaveText('1');
+        await expect(page.getByRole('button', {name: 'add to cart'})).toBeHidden();
+        await expect(page.getByRole('button', {name: 'remove'})).toBeVisible();
 
-    await page.getByRole('button', {name: 'checkout'}).click();
+        //Function that checks that the cart badge (the red circle with the number of items) updates accordingly.
+        //Since the cart icon appears in most pages of the website I made it a function to not repeat the same 2 lines in all pages.
+        async function checkCartBadge(){
+            await expect(page.locator('data-test=shopping-cart-badge')).toBeVisible();
+            await expect(page.locator('data-test=shopping-cart-badge')).toHaveText('1');
+            return;
+        }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    await expect(page).toHaveURL(link+checkoutPath_1);
+        await checkCartBadge();
 
-    await checkCartBadge();
+        await page.locator('data-test=shopping-cart-link').click();
 
-    await page.getByPlaceholder('first name').fill(firstName);
-    await page.getByPlaceholder('last name').fill(lastName);
-    await page.getByPlaceholder('zip/postal code').fill(zipCode);
+        //CART PAGE////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    await page.getByRole('button', {name: 'continue'}).click();
+        await expect(page).toHaveURL(link+cartPath);
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //Check that the item is listed and that the cart still displays it, then go to checkout
+        await checkCartBadge();
 
-    await expect(page).toHaveURL(link+checkoutPath_2);
+        await expect(page.getByText(itemName)).toBeVisible();
 
-    await checkCartBadge();
+        await expect(page.locator('data-test=item-quantity')).toBeVisible();
+        await expect(page.locator('data-test=item-quantity')).toHaveText('1');
 
-    await page.getByRole('button', {name: 'finish'}).click();
+        await page.getByRole('button', {name: 'checkout'}).click();
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //CHECKOUT STAGE ONE PAGE//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    await expect(page).toHaveURL(link+checkoutPath_complete);
+        await expect(page).toHaveURL(link+checkoutPath_1);
 
-    //CHECKOUT COMPLETED!
+        await checkCartBadge();
 
-  });
+        //Fill in the information needed for checkout, then continue
+        await page.getByPlaceholder('first name').fill(firstName);
+        await page.getByPlaceholder('last name').fill(lastName);
+        await page.getByPlaceholder('zip/postal code').fill(zipCode);
 
-  test.afterAll(async () => {});
+        await page.getByRole('button', {name: 'continue'}).click();
 
-  test.afterEach(async ({page}) => {
+        //CHECKOUT STAGE 2 PAGE////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  });
+        await expect(page).toHaveURL(link+checkoutPath_2);
+
+        await checkCartBadge();
+
+        //Check that the item is still listed before finishing the order
+        await expect(page.getByText(itemName)).toBeVisible();
+
+        await page.getByRole('button', {name: 'finish'}).click();
+
+        //CHECKOUT COMPLETE PAGE///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        await expect(page).toHaveURL(link+checkoutPath_complete);
+
+        //Check that the checkout process is displayed as complete
+        await expect(page.getByText('Checkout: Complete!')).toBeVisible();
+
+        //CHECKOUT COMPLETED!
+
+    });
+
+    test.afterAll(async () => {});
+
+    test.afterEach(async ({page}) => {
+
+    });
 });
