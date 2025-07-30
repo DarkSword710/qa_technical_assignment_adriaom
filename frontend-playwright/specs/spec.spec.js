@@ -71,7 +71,7 @@ test.describe('QA Technical Assignment', () => {
         await expect(page).toHaveURL(link+inventoryPath);
 
         //Items are NOT in ID order, since they get sorted alphabetically within the page by default. Second item alphabetically (Bike Light) is ID 0
-        //Checking all the items with the inventory-item-name as their data-test gives us a list of all products. Click on the desired one
+        //Checking all the items with inventory-item-name as their data-test returns a list of all products in their current order. Click on the desired one
         await page.locator('data-test=inventory-item-name').nth(itemToBuy).click();
 
         //PDP (PRODUCT DETAILS PAGE)////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
